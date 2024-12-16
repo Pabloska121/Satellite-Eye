@@ -3,7 +3,7 @@
 ### In Progress
 
 - [ ] Implement Magnitude
-- [ ] 
+- [ ] Make Notifications
 
 ### Done ✓
 
