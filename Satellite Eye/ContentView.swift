@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject var satelliteInfo = SatelliteInfo()
     @StateObject var settingsModel = SettingsModel()
     @StateObject private var locationManager = Location()
+    @StateObject private var notify = NotificationHandler()
     
     @State private var selectedView = 1
     
@@ -12,7 +13,7 @@ struct ContentView: View {
             if !satelliteManager.isLoading {
                 // Mostrar la vista principal con TabView una vez que los datos están listos
                 TabView(selection: $selectedView) {
-                    MapView(satelliteManager: satelliteManager, satelliteInfo: satelliteInfo, locationManager: locationManager, settingsModel: settingsModel)
+                    MapView(satelliteManager: satelliteManager, satelliteInfo: satelliteInfo, locationManager: locationManager, selectedView: $selectedView, settingsModel: settingsModel, notify: notify)
                         .tabItem {
                             Label("Map", systemImage: "map")
                         }
@@ -24,7 +25,7 @@ struct ContentView: View {
                         }
                         .tag(2)
                     
-                    PredictionView(satelliteManager: satelliteManager, satelliteInfo: satelliteInfo, locationManager: locationManager, selectedView: $selectedView, settingsModel: settingsModel)
+                    PredictionView(satelliteManager: satelliteManager, satelliteInfo: satelliteInfo, locationManager: locationManager, selectedView: $selectedView, settingsModel: settingsModel, notify: notify)
                         .tabItem {
                             Label("Predict", systemImage: "antenna.radiowaves.left.and.right")
                         }

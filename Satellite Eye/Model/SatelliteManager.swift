@@ -50,6 +50,7 @@ class SatelliteManager: ObservableObject {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let satellites):
+                        self?.downloadProgress = 1.0
                         self?.processDownloadedData(satellites: satellites, fileURL: fileURL)
                     case .failure(let error):
                         print("Failed to download TLE data: \(error)")
@@ -64,8 +65,6 @@ class SatelliteManager: ObservableObject {
     private func processDownloadedData(satellites: [TLE], fileURL: URL) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             do {
-                self?.downloadProgress = 1.0
-                // Guardar datos en el caché en formato CSV
                 let csvString = self?.convertSatellitesToCSV(satellites) ?? ""
                 try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
 

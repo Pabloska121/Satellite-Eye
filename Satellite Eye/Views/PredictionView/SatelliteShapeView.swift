@@ -37,7 +37,7 @@ struct SatelliteShapeView: View {
                             .offset(y: 135.2)
                     }
                     .onAppear {
-                        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                        withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
                             angle = 45
                         }
                     }

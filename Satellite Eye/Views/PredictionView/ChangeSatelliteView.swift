@@ -21,7 +21,7 @@ struct ChangeSatelliteView: View {
                         }
                         .padding(7)
                         .foregroundStyle(LinearGradient(gradient: Gradient(colors: [.blue, .cyan]), startPoint: .leading, endPoint: .trailing))
-                        .background(.thinMaterial)
+                        .background(.ultraThinMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: 15))
                     })
                 }

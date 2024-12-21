@@ -1,18 +1,19 @@
 import SwiftUI
+import BottomSheet
 import MapKit
 
 struct PassesView: View {
-    @Environment(\.colorScheme) var colorScheme
-    
     
     @ObservedObject var satelliteManager: SatelliteManager
     @ObservedObject var locationManager: Location
-    @Binding var passes: [(Date, Date, Double, Visibility, String)]
+    @Binding var passes: [(Date, Date, Double, Date, Visibility, String)]
     @Binding var path: [CLLocationCoordinate2D]
     @Binding var cameraPosition: MapCameraPosition
+    @Binding var isSheetPresented: BottomSheetPosition
+    @Binding var actualpass: (Date, Date, Double, Date, Visibility, String)
     
     var body: some View {
-        VStack {
+
             if passes.count == 0 {
                 VStack {
                     Spacer()
@@ -26,48 +27,44 @@ struct PassesView: View {
                 }
             } else {
                 ScrollView {
-                    HStack {
-                        VStack {
-                            // Agrupamos los pases por día en una lista ordenada
-                            let groupedPasses = agruparPasesPorDia(passes: passes)
+                    VStack {
+                        // Agrupamos los pases por día en una lista ordenada
+                        let groupedPasses = agruparPasesPorDia(passes: passes)
+                        
+                        ForEach(groupedPasses, id: \.0) { (day, dayPasses) in
+                            // Título del día
+                            Text(day)
+                                .font(.headline)
+                                .padding(.top)
+                                .foregroundStyle(LinearGradient(gradient: Gradient(colors: [.blue, .cyan]), startPoint: .leading, endPoint: .trailing))
                             
-                            ForEach(groupedPasses, id: \.0) { (day, dayPasses) in
-                                // Título del día
-                                Text(day)
-                                    .font(.headline)
-                                    .padding(.top)
-                                    .foregroundStyle(LinearGradient(gradient: Gradient(colors: [.blue, .cyan]), startPoint: .leading, endPoint: .trailing))
-                                
-                                // Mostrar cada pase para el día actual
-                                ForEach(dayPasses, id: \.0) { pass in
-                                    Button {
-                                        displayPredictionPath(for: pass)
-                                    } label: {
-                                        HStack {
-                                            cicloDetailView(pass: pass)
-                                        }
+                            // Mostrar cada pase para el día actual
+                            ForEach(dayPasses, id: \.0) { pass in
+                                Button {
+                                    displayPredictionPath(for: pass)
+                                    actualpass = pass
+                                    self.isSheetPresented = .relative(0.85)
+                                } label: {
+                                    HStack {
+                                        cicloDetailView(pass: pass)
                                     }
                                 }
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(colorScheme == .dark ? Color.black : Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding()
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 20))
             }
-        }
-        .padding(.horizontal)
+
     }
     
-    private func agruparPasesPorDia(passes: [(Date, Date, Double, Visibility, String)]) -> [(String, [(Date, Date, Double, Visibility, String)])] {
+    private func agruparPasesPorDia(passes: [(Date, Date, Double, Date, Visibility, String)]) -> [(String, [(Date, Date, Double, Date, Visibility, String)])] {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "EEEE dd/MM/yyyy"
-        var pasesAgrupados: [(String, [(Date, Date, Double, Visibility, String)])] = []
+        var pasesAgrupados: [(String, [(Date, Date, Double, Date, Visibility, String)])] = []
         var currentDay: String? = nil
-        var currentPasses: [(Date, Date, Double, Visibility, String)] = []
+        var currentPasses: [(Date, Date, Double, Date, Visibility, String)] = []
         
         for pass in passes {
             let dayKey = dateFormatter.string(from: pass.0)
@@ -94,7 +91,7 @@ struct PassesView: View {
         return pasesAgrupados
     }
     
-    private func displayPredictionPath(for pass: (Date, Date, Double, Visibility, String)) {
+    private func displayPredictionPath(for pass: (Date, Date, Double, Date, Visibility, String)) {
         path = []
         guard let selectedSatellite = satelliteManager.selectedSatellite else { return }
         
@@ -114,86 +111,40 @@ struct PassesView: View {
             if let location = location {
                 cameraPosition = .region(MKCoordinateRegion(
                     center: CLLocationCoordinate2D(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude),
-                    span: MKCoordinateSpan(latitudeDelta: 25, longitudeDelta: 25)
+                    span: MKCoordinateSpan(latitudeDelta: 35, longitudeDelta: 35)
                 ))
             }
         }
     }
     
     // Vista de detalle de cada pase
-    private func cicloDetailView(pass: (Date, Date, Double, Visibility, String)) -> some View {
+    private func cicloDetailView(pass: (Date, Date, Double, Date, Visibility, String)) -> some View {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEEE dd/MM/yyyy" // Formato completo de fecha "Monday 11/11/2024"
+        dateFormatter.dateFormat = "EEEE dd/MM/yyyy"
         
         let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss" // Formato de hora "04:40:29"
+        timeFormatter.dateFormat = "HH:mm:ss"
 
         let horaInicio = timeFormatter.string(from: pass.0)
         let horaFin = timeFormatter.string(from: pass.1)
 
-        return HStack {
-            VStack {
-                HStack {
-                    Image(systemName: "arrow.up.to.line")
-                        .font(.title3)
-                        .foregroundStyle(.blue)
-                    Text(horaInicio)
-                        .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
-                        .font(.title3)
-                    Divider()
-                    Image(systemName: "arrow.down.to.line")
-                        .font(.title3)
-                        .foregroundStyle(.blue)
-                    Text(horaFin)
-                        .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
-                        .font(.title3)
-                }
-                HStack {
-                    Image(systemName: "angle")
-                        .font(.title3)
-                        .foregroundStyle(.blue)
-                    Text("Max elev: \(String(format: "%.2f", pass.2))º")
-                        .font(.title3)
-                        .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                .padding(.bottom, 2)
-                HStack {
-                    if pass.3 == .visible {
-                        Image(systemName: "eye")
-                            .font(.title3)
-                            .foregroundStyle(.blue)
-                    } else {
-                        Image(systemName: "eye.slash")
-                            .font(.title3)
-                            .foregroundStyle(.blue)
+        return VStack {
+            HStack(spacing: 20) {
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(Color.white.opacity(0.25))
+                    .background(Blur(radius: 15, opaque: true))
+                    .clipShape(RoundedRectangle(cornerRadius: 25))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 25)
+                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
                     }
-                    Text(pass.3.description)
-                        .font(.title3)
-                        .foregroundStyle(colorScheme == .dark ? Color.white : Color.black)
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
+                    .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 5)
+                    .frame(width: UIScreen.main.bounds.width - 50, height: 120)
+                    .overlay {
+                        CicloDetailInfoView(horaInicio: horaInicio, horaFin: horaFin, pass: pass)
+                    }
             }
-            Spacer()
-            Divider()
-            Spacer()
-            if pass.4 == "" {
-                Image(systemName: "questionmark.circle")
-                    .font(.largeTitle)
-                    .foregroundStyle(.blue)
-                    .frame(alignment: .center)
-            } else {
-                Image(pass.4)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 50, height: 50, alignment: .center)
-            }
+           
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .padding(.bottom)
     }
 }

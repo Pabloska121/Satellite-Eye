@@ -88,7 +88,9 @@ class Extra {
         let sun_obs = (sun_ecef.0 - obs_ecef.0, sun_ecef.1 - obs_ecef.1, sun_ecef.2 - obs_ecef.2)
         let beta = (Extra.angleBetween(v1: sat_obs, v2: sun_obs))
         let disttosat = Extra.magnitude(of: (sat_obs))
-        return imag - 15 + 5*log10(disttosat) - 2.5*log10(sin(beta) + (Double.pi-beta)*cos(beta))
+        //print(log10(disttosat/1000))
+        //print(log10(sin(beta) + (Double.pi-beta)*cos(beta)))
+        return imag + 5*log10(disttosat/1000) - 2.5*log10(sin(beta) + (Double.pi-beta)*cos(beta))
     }
     
     static func ECItoElevAz(timedt: Date, objectPosition: (Double, Double, Double), observerPosition: (Double, Double, Double), observerLat: Double, observerLon: Double, observerAlt: Double) -> (az: Double, el: Double, SEZ: (Double, Double, Double)){

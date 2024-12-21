@@ -90,16 +90,18 @@ class SatelliteCalc {
 
         let azelev = Extra.ECItoElevAz(timedt: utcTime, objectPosition: satPosition, observerPosition: observerPosition, observerLat: observerLat, observerLon: observerLon, observerAlt: observerAlt)
         
+        return (azelev.az, azelev.el)
+    }
+    
+    func getApparentMagnitude(utcTime: Date, observerLon: Double, observerLat: Double, observerAlt: Double) -> Double {
+        let (satPosition, _) = self.getPosition(utcTime: utcTime, normalize: false)
+        let (observerPosition, _) = observerPosition(utcTime: utcTime, lon: observerLon, lat: observerLat, alt: observerAlt)
         let sun = Extra.calculateSolarPosition(timedt: utcTime)
         let sun_ecef = (sun.3, sun.4, sun.5)
         let obs_ecef = Extra.ECItoECEF(timedt: utcTime, eci_vector: observerPosition)
         let sat_ecef = Extra.ECItoECEF(timedt: utcTime, eci_vector: satPosition)
         
-        //Mag
-        //let apparent_magnitude = Extra.mag(imag: -1.8, sat_ecef: sat_ecef, sun_ecef: sun_ecef, obs_ecef: obs_ecef)
-        //print(apparent_magnitude)
-        
-        return (azelev.az, azelev.el)
+        return Extra.mag(imag: -1.8, sat_ecef: sat_ecef, sun_ecef: sun_ecef, obs_ecef: obs_ecef)
     }
     
     func kep2xyz(kep: [String: Double]) -> (simd_double3, simd_double3) {
@@ -135,8 +137,9 @@ class SatelliteCalc {
         return (position, velocity)
     }
     
-    func getNextPasses(utcTime: Date, length: Int, lon: Double, lat: Double, alt: Double, tol: Double = 0.001, horizon: Double = 0, sunriseDeg: Double = 0) -> [(Date, Date, Double, Visibility)] {
+    func getNextPasses(utcTime2: Date, length: Int, lon: Double, lat: Double, alt: Double, tol: Double = 0.001, horizon: Double = 0, sunriseDeg: Double = 0) -> [(Date, Date, Double, Date, Visibility)] {
         // Función de elevación
+        let utcTime = utcTime2.addingTimeInterval(-60 * 15)
         func elevation(minutes: Double) -> Double {
             return self.getObserverLook(utcTime: utcTime.addingTimeInterval(minutes * 60), observerLon: lon, observerLat: lat, observerAlt: alt).elevation - horizon
         }
@@ -267,7 +270,7 @@ class SatelliteCalc {
             return pair.0 * pair.1 < 0 ? index : nil
         }
         
-        var result: [(Date, Date, Double, Visibility)] = []
+        var result: [(Date, Date, Double, Date, Visibility)] = []
         var riseTime: Date?
         
         for guess in zcs {
@@ -301,7 +304,7 @@ class SatelliteCalc {
                         let maxElevation = self.getObserverLook(utcTime: highest, observerLon: lon, observerLat: lat, observerAlt: alt).elevation
                         
                         if maxElevation > 10 {
-                            result.append((riseTime, fallTime, maxElevation, intervalVisibility))
+                            result.append((riseTime, fallTime, maxElevation, highest, intervalVisibility))
                         }
                     }
                 }

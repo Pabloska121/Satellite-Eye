@@ -8,7 +8,6 @@ struct CicloDetailInfoView: View {
     var pass: (Date, Date, Double, Date, Visibility, String)
     
     var body: some View {
-        
         HStack {
             VStack {
                 HStack {
@@ -52,9 +51,8 @@ struct CicloDetailInfoView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }
-            Spacer()
-            Divider()
-            Spacer()
+            .padding(.trailing, 10)
+
             if pass.5 == "" {
                 Image(systemName: "questionmark.circle")
                     .font(.largeTitle)
@@ -64,12 +62,9 @@ struct CicloDetailInfoView: View {
                 Image(pass.5)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 50, height: 50, alignment: .center)
+                    .frame(width: 60, height: 60, alignment: .center)
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .padding(.bottom)
     }
 }

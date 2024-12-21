@@ -14,8 +14,8 @@
             filePath = "Satellite Eye/Model/SatelliteCalc.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "211"
-            endingLineNumber = "211"
+            startingLineNumber = "214"
+            endingLineNumber = "214"
             landmarkName = "getRoot(fun:start:end:tol:maxIter:)"
             landmarkType = "9">
          </BreakpointContent>
@@ -23,33 +23,17 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "4E488140-FA33-4C33-A364-6258B867E014"
+            uuid = "BBE85684-36BF-483E-8839-76273ACAD747"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Satellite Eye/Model/SatelliteCalc.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "311"
-            endingLineNumber = "311"
-            landmarkName = "getNextPasses(utcTime:length:lon:lat:alt:tol:horizon:sunriseDeg:)"
+            startingLineNumber = "282"
+            endingLineNumber = "282"
+            landmarkName = "getNextPasses(utcTime2:length:lon:lat:alt:tol:horizon:sunriseDeg:)"
             landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "E6FE26C0-FBDD-4F88-9C5C-A64CE724FBCA"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Satellite Eye/Views/PredictionView/PredictionView.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "44"
-            endingLineNumber = "44"
-            landmarkName = "body"
-            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

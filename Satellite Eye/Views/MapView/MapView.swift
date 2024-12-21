@@ -5,7 +5,7 @@ struct MapView: View {
     @ObservedObject var satelliteManager: SatelliteManager
     @ObservedObject var satelliteInfo: SatelliteInfo
     @ObservedObject var settingsModel: SettingsModel
-
+    @ObservedObject var notify: NotificationHandler
     @ObservedObject var locationManager: Location
 
     @State private var cameraPosition: MapCameraPosition = .automatic
@@ -22,12 +22,15 @@ struct MapView: View {
     @State private var satelliteTimer: DispatchSourceTimer?
     @State private var sunTimer: DispatchSourceTimer?
 
+    @Binding var selectedView: Int
     
-    init(satelliteManager: SatelliteManager, satelliteInfo: SatelliteInfo, locationManager: Location, settingsModel: SettingsModel) {
+    init(satelliteManager: SatelliteManager, satelliteInfo: SatelliteInfo, locationManager: Location, selectedView: Binding<Int>, settingsModel: SettingsModel, notify: NotificationHandler) {
         self.satelliteManager = satelliteManager
         self.satelliteInfo = satelliteInfo
         self.locationManager = locationManager
+        self._selectedView = selectedView
         self.settingsModel = settingsModel
+        self.notify = notify
     }
 
     var body: some View {
@@ -36,14 +39,14 @@ struct MapView: View {
                 // Mapa de la zona de noche
                 MapPolygon(coordinates: nightArea)
                     .foregroundStyle(.black.opacity(0.3))
-
+                
                 // Posición del Sol
                 Annotation("", coordinate: suncoord) {
                     Image("sun")
                         .resizable()
                         .frame(width: 40, height: 40)
                 }
-
+                
                 // Posición del Satélite
                 if let position = satelliteInfo.position {
                     Annotation(position.name, coordinate: CLLocationCoordinate2D(latitude: position.latitude, longitude: position.longitude)) {
@@ -54,11 +57,11 @@ struct MapView: View {
                         }
                     }
                 }
-
+                
                 // Trayectoria del Satélite
                 MapPolyline(coordinates: path)
                     .stroke(.red, lineWidth: 2)
-
+                
                 // Usuario
                 UserAnnotation()
             }
@@ -68,9 +71,10 @@ struct MapView: View {
             }
             // Controles de cámara y estilo
             MapControlsView(cameraPosition: $cameraPosition, isStandardMapStyle: $isStandardMapStyle)
-
+            
             // Display de información satélite
             DisplayView(satelliteInfo: satelliteInfo)
+        
         }
         .onAppear(perform: initializeMap)
         .onDisappear(perform: stopTimers)
@@ -78,11 +82,16 @@ struct MapView: View {
 
     private func initializeMap() {
         locationManager.requestLocation { _ in }
+        requestNotifications()
         setupInitialData()
         refreshPathandCamera()
         setupTimers()
     }
 
+    private func requestNotifications() {
+        notify.askPermission { _ in }
+    }
+    
     private func setupInitialData() {
         guard !initialSetupDone else { return }
         Task {

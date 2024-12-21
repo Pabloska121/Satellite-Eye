@@ -12,22 +12,39 @@ struct ProgressBar: View {
 
     var body: some View {
         ZStack {
-            Map()
-            VStack(alignment: .leading, spacing: 7) {
-                headerView()
-                progressBarView()
-            }
-            .padding(20)
-            .background(Color.white)
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.1), radius: 20, x: 0.0, y: 0.0)
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color(UIColor.lightGray).opacity(0.3),
+                    Color(red: 0.1, green: 0.2, blue: 0.5),
+                    Color.black
+                ]),
+                center: UnitPoint(x: 0.1, y: 1.5),
+                startRadius: 650, // Radio inicial
+                endRadius: 1200   // Radio final
+            )
+            .edgesIgnoringSafeArea(.all)
+            RoundedRectangle(cornerRadius: 15)
+                .fill(Color.white.opacity(0.4))
+                .background(Blur(radius: 15, opaque: true))
+                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(Color.white.opacity(0.7), lineWidth: 1)
+                }
+                .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 5)
+                .frame(width: UIScreen.main.bounds.width - 50, height: 80)
+                .overlay {
+                    VStack(alignment: .leading, spacing: 7) {
+                        headerView()
+                        progressBarView()
+                    }
+                }
             .onChange(of: satelliteManager.downloadProgress) {
                 handleProgressChange()
             }
         }
     }
     
-    /// Vista del encabezado con el texto y el ícono
     private func headerView() -> some View {
         HStack {
             if showCompleted {
@@ -45,22 +62,17 @@ struct ProgressBar: View {
                     .bold()
                     .font(.callout)
                     .foregroundStyle(
-                        LinearGradient(
-                            gradient: Gradient(colors: [.blue, .cyan]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+                        Color.white
                     )
             }
             Spacer()
             Image(systemName: "clock")
                 .font(.caption)
-                .foregroundStyle(.gray.opacity(0.7))
+                .foregroundStyle(.white.opacity(0.7))
         }
         .frame(width: width)
     }
     
-    /// Vista de la barra de progreso
     private func progressBarView() -> some View {
         ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: CRadius)
