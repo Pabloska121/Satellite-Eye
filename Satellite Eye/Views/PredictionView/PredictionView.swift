@@ -52,7 +52,7 @@ struct PredictionView: View {
         .bottomSheet(bottomSheetPosition: self.$bottomSheetPosition, switchablePositions: [.relativeTop(0.85)], headerContent: {
             sheetHeaderView()
         }) {
-            SheetView(notify: notify, cameraPosition: $cameraPosition, path: $path, actualpass: $actualpass)
+            SheetView(notify: notify, satelliteInfo: satelliteInfo, cameraPosition: $cameraPosition, path: $path, actualpass: $actualpass)
         }
         .customAnimation(.linear.speed(1.2))
         .customBackground(

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		37EEE7DC2D16EF1A00E6DDB4 /* BottomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = 37EEE7DB2D16EF1A00E6DDB4 /* BottomSheet */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		37ECA50E2CDCE74F00812FD2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -55,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				37EEE7DC2D16EF1A00E6DDB4 /* BottomSheet in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +118,7 @@
 			);
 			name = "Satellite Eye";
 			packageProductDependencies = (
+				37EEE7DB2D16EF1A00E6DDB4 /* BottomSheet */,
 			);
 			productName = "Satellite Eye";
 			productReference = 37ECA4FD2CDCE74D00812FD2 /* Satellite Eye.app */;
@@ -190,6 +196,9 @@
 			);
 			mainGroup = 37ECA4F42CDCE74D00812FD2;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				37EEE7DA2D16EF1A00E6DDB4 /* XCRemoteSwiftPackageReference "BottomSheet" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 37ECA4FE2CDCE74D00812FD2 /* Products */;
 			projectDirPath = "";
@@ -394,6 +403,7 @@
 				DEVELOPMENT_TEAM = 35W245T964;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Satellite-Eye-Info.plist";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Need to show satellite";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Need to know you location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -428,6 +438,7 @@
 				DEVELOPMENT_TEAM = 35W245T964;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Satellite-Eye-Info.plist";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Need to show satellite";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Need to know you location";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -563,6 +574,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		37EEE7DA2D16EF1A00E6DDB4 /* XCRemoteSwiftPackageReference "BottomSheet" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/lucaszischka/BottomSheet";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		37EEE7DB2D16EF1A00E6DDB4 /* BottomSheet */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 37EEE7DA2D16EF1A00E6DDB4 /* XCRemoteSwiftPackageReference "BottomSheet" */;
+			productName = BottomSheet;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 37ECA4F52CDCE74D00812FD2 /* Project object */;
 }

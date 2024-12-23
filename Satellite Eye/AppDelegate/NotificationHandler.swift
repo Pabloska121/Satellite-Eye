@@ -3,11 +3,8 @@ import UserNotifications
 
 class NotificationHandler: ObservableObject {
     func askPermission(completion: @escaping (Bool) -> Void) {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
-            if success {
-                print("Access granted!")
-                completion(true)
-            } else if let error = error {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, error in
+            if let error = error {
                 print("Permission error: \(error.localizedDescription)")
                 completion(false)
             }

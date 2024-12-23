@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import BottomSheet
 
 struct MapView: View {
     @ObservedObject var satelliteManager: SatelliteManager
@@ -15,6 +16,7 @@ struct MapView: View {
 
     @State private var isStandardMapStyle = true
     @State private var initialSetupDone = false
+    @State var bottomSheetPosition: BottomSheetPosition = .hidden
 
     private var satelliteUpdateInterval: TimeInterval = 1.0
     private var sunUpdateInterval: TimeInterval = 30.0
@@ -74,10 +76,34 @@ struct MapView: View {
             
             // Display de información satélite
             DisplayView(satelliteInfo: satelliteInfo)
-        
+            
         }
         .onAppear(perform: initializeMap)
         .onDisappear(perform: stopTimers)
+        /*
+        .bottomSheet(bottomSheetPosition: self.$bottomSheetPosition, switchablePositions: [.relativeTop(0.85)], headerContent: {
+        }) {
+            
+        }
+        .customAnimation(.linear.speed(1.2))
+        .customBackground(
+            RoundedRectangle(cornerRadius: 40)
+                .fill(Color.white.opacity(0.25))
+                .background(Blur(radius: 15, opaque: true))
+                .clipShape(RoundedRectangle(cornerRadius: 40))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 40)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                }
+        )
+        .sheetWidth(.relative(1))
+        .showCloseButton()
+        .enableTapToDismiss()
+        .enableSwipeToDismiss()
+        .enableContentDrag()
+        .showDragIndicator()
+        .foregroundStyle(.white)
+         */
     }
 
     private func initializeMap() {

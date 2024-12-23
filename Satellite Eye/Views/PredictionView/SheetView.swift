@@ -3,6 +3,7 @@ import MapKit
 
 struct SheetView: View {
     @ObservedObject var notify: NotificationHandler
+    @ObservedObject var satelliteInfo: SatelliteInfo
     
     @Binding var cameraPosition: MapCameraPosition
     @Binding var path: [CLLocationCoordinate2D]
@@ -115,34 +116,35 @@ struct SheetView: View {
     private func notificationButton() -> some View {
         return VStack {
             HStack(spacing: 20) {
-                RoundedRectangle(cornerRadius: 50)
-                    .fill(LinearGradient(gradient: Gradient(colors: [.cyan, .blue]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .background(Blur(radius: 15, opaque: true))
-                    .clipShape(RoundedRectangle(cornerRadius: 50))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 50)
-                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                    }
-                    .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 5)
-                    .frame(width: UIScreen.main.bounds.width - 50, height: 60)
-                    .overlay {
-                        Button(action: {
-                            // Restamos 5 minutos de la fecha de paso del satélite (actualpass.3)
-                            let notificationTime = Calendar.current.date(byAdding: .minute, value: -5, to: actualpass.3)!
-                            print(notificationTime)
-                            
-                            // Enviamos la notificación para 5 minutos antes del paso
-                            notify.sendNotification(date: notificationTime, type: "date", title: "Reminder: Satellite passing soon!", body: "The satellite will pass at \(dateFormatter.string(from: actualpass.3))") { _ in}
-                        }) {
+                Button(action: {
+                    let notificationTime = Calendar.current.date(byAdding: .minute, value: -5, to: actualpass.0)!
+                    print(notificationTime)
+                    
+                    // Enviamos la notificación para 5 minutos antes del paso
+                    notify.sendNotification(date: notificationTime, type: "date", title: "\(satelliteInfo.position?.name ?? "Unknown") passing in 5 minutes!", body: "The satellite will pass at \(timeFormatter.string(from: actualpass.0))") { _ in}
+                }) {
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(LinearGradient(gradient: Gradient(colors: [.cyan, .blue]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .background(Blur(radius: 15, opaque: true))
+                        .clipShape(RoundedRectangle(cornerRadius: 50))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 50)
+                                .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                        }
+                        .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 5)
+                        .frame(width: UIScreen.main.bounds.width - 50, height: 60)
+                        .overlay {
                             Spacer()
                             Text("Set a reminder for satellite pass")
-                                .font(.headline)
+                                .font(.title3)
+                                .bold()
                                 .foregroundColor(.white)
                                 .padding()
                             Spacer()
                         }
-                        .padding(.horizontal)
-                    }
+                }
+                .padding(.horizontal)
+                
             }
         }
     }

@@ -2,45 +2,52 @@ import Foundation
 
 class SatelliteManager: ObservableObject {
     @Published var allSatellites: [TLE] = []
+    @Published var active: [TLE] = []
+    @Published var visual: [TLE] = []
+    @Published var stations: [TLE] = []
     @Published var selectedSatellite: TLE?
     @Published var isLoading: Bool = true
     @Published var downloadProgress: CGFloat = 0.0
-    
-    private let tleDownloader = TLEDownloader()
 
-    func loadSatellitesData() {
+    private let tleDownloader = TLEDownloader()
+    @Published var satellitesByGroup: [String: [TLE]] = [:]  // Diccionario que agrupa los satélites por tipo
+
+    func loadAllSatelliteGroups() {
         isLoading = true
         downloadProgress = 0.0
 
-        let fileManager = FileManager.default
-        if let cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first {
-            let fileURL = cacheDirectory.appendingPathComponent("active.csv")
+        let groups = ["active", "visual", "stations"]
 
-            if fileManager.fileExists(atPath: fileURL.path) {
-                do {
-                    let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
-                    if let modificationDate = attributes[.modificationDate] as? Date,
-                       Date().timeIntervalSince(modificationDate) < 10 * 3600 {
-                        try loadSatellitesFromFile(at: fileURL)
-                    } else {
-                        downloadAndSaveSatellites(to: fileURL)
-                    }
-                } catch {
-                    print("Error accessing cache file: \(error)")
-                    isLoading = false
-                }
-            } else {
-                downloadAndSaveSatellites(to: fileURL)
-            }
-        } else {
-            print("Error: Cache directory not found")
-            isLoading = false  // Finaliza la carga si no encuentra el directorio de caché
+        for group in groups {
+            loadSatellitesData(for: group)
         }
     }
 
-    private func downloadAndSaveSatellites(to fileURL: URL) {
-        downloadProgress = 0.0 
-        tleDownloader.downloadTLEFile(
+    func loadSatellitesData(for group: String) {
+        let fileManager = FileManager.default
+        if let cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            let fileURL = cacheDirectory.appendingPathComponent("\(group).csv")
+
+            if fileManager.fileExists(atPath: fileURL.path) {
+                do {
+                    try loadSatellitesFromFile(at: fileURL, group: group)
+                } catch {
+                    print("Error accessing cache file for group \(group): \(error)")
+                    isLoading = false
+                }
+            } else {
+                let apiString = "https://celestrak.org/NORAD/elements/gp.php?GROUP=\(group)&FORMAT=csv"
+                downloadAndSaveSatellites(to: fileURL, APIString: apiString, group: group)
+            }
+        } else {
+            print("Error: Cache directory not found")
+            isLoading = false
+        }
+    }
+
+    func downloadAndSaveSatellites(to fileURL: URL, APIString: String, group: String) {
+        downloadProgress = 0.0
+        tleDownloader.downloadTLEFile(urlString: APIString,
             progressHandler: { [weak self] progress in
                 DispatchQueue.main.async {
                     self?.downloadProgress = progress * 1.0
@@ -51,7 +58,7 @@ class SatelliteManager: ObservableObject {
                     switch result {
                     case .success(let satellites):
                         self?.downloadProgress = 1.0
-                        self?.processDownloadedData(satellites: satellites, fileURL: fileURL)
+                        self?.processDownloadedData(satellites: satellites, fileURL: fileURL, group: group)
                     case .failure(let error):
                         print("Failed to download TLE data: \(error)")
                         self?.isLoading = false
@@ -61,17 +68,34 @@ class SatelliteManager: ObservableObject {
             }
         )
     }
-    
-    private func processDownloadedData(satellites: [TLE], fileURL: URL) {
+
+    private func processDownloadedData(satellites: [TLE], fileURL: URL, group: String) {
         DispatchQueue.global(qos: .background).async { [weak self] in
             do {
                 let csvString = self?.convertSatellitesToCSV(satellites) ?? ""
                 try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
 
                 DispatchQueue.main.async {
-                    self?.allSatellites = satellites
+                    // Actualiza la categoría correspondiente
+                    switch group {
+                    case "active":
+                        self?.active = satellites
+                    case "visual":
+                        self?.visual = satellites
+                    case "stations":
+                        self?.stations = satellites
+                    default:
+                        print("Unknown group: \(group)")
+                    }
+
+                    // Actualiza el diccionario satellitesByGroup
+                    self?.satellitesByGroup[group] = satellites
+
+                    // Agregar satélites al conjunto total
+                    self?.allSatellites.append(contentsOf: satellites)
+
                     self?.isLoading = false
-                    print("Satellites successfully downloaded, processed, and cached!")
+                    print("Satellites for group '\(group)' successfully downloaded, processed, and cached!")
                 }
             } catch {
                 print("Error processing satellites: \(error)")
@@ -82,60 +106,53 @@ class SatelliteManager: ObservableObject {
             }
         }
     }
-    
-    private func loadSatellitesFromFile(at fileURL: URL) throws {
-        // Simulación del progreso durante la carga desde el archivo CSV
-        downloadProgress = 0.0  // Iniciar progreso en 0%
-        isLoading = true
-        
-        // Crear un temporizador que simule el progreso
-        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
-            guard let self = self else { return }
-            
-            // Aumenta el progreso gradualmente hasta 100%
-            if self.downloadProgress < 1.0 {
-                self.downloadProgress += 0.05  // Ajusta el incremento según la velocidad deseada
-            } else {
-                // Finaliza el temporizador cuando se alcanza el 100%
-                timer.invalidate()
-                
-                do {
-                    let data = try Data(contentsOf: fileURL)
-                    let satellites = try self.parseCSV(data: data)
-                    DispatchQueue.main.async {
-                        self.allSatellites = satellites
-                        self.isLoading = false
-                        print("Satellites successfully loaded from cache!")
-                    }
-                } catch {
-                    print("Error loading satellites from file: \(error)")
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                        self.downloadProgress = 1.0  // Completar en caso de error
-                    }
-                }
+
+    private func loadSatellitesFromFile(at fileURL: URL, group: String) throws {
+        let data = try Data(contentsOf: fileURL)
+        let satellites = try parseCSV(data: data)
+
+        DispatchQueue.main.async {
+            // Actualiza la categoría correspondiente
+            switch group {
+            case "active":
+                self.active = satellites
+            case "visual":
+                self.visual = satellites
+            case "stations":
+                self.stations = satellites
+            default:
+                print("Unknown group: \(group)")
             }
+
+            // Actualiza el diccionario satellitesByGroup
+            self.satellitesByGroup[group] = satellites
+
+            // Agregar satélites al conjunto total
+            self.allSatellites.append(contentsOf: satellites)
+
+            self.isLoading = false
+            print("Satellites for group '\(group)' successfully loaded from cache!")
         }
     }
-    
+
     private func convertSatellitesToCSV(_ satellites: [TLE]) -> String {
         var csvString = "OBJECT_NAME,OBJECT_ID,EPOCH,MEAN_MOTION,ECCENTRICITY,INCLINATION,RA_OF_ASC_NODE,ARG_OF_PERICENTER,MEAN_ANOMALY,EPHEMERIS_TYPE,CLASSIFICATION_TYPE,NORAD_CAT_ID,ELEMENT_SET_NO,REV_AT_EPOCH,BSTAR,MEAN_MOTION_DOT,MEAN_MOTION_DDOT\n"
-        
+
         for satellite in satellites {
             csvString += "\(satellite.OBJECT_NAME),\(satellite.OBJECT_ID),\(satellite.EPOCH),\(satellite.MEAN_MOTION),\(satellite.ECCENTRICITY),\(satellite.INCLINATION),\(satellite.RA_OF_ASC_NODE),\(satellite.ARG_OF_PERICENTER),\(satellite.MEAN_ANOMALY),\(satellite.EPHEMERIS_TYPE),\(satellite.CLASSIFICATION_TYPE),\(satellite.NORAD_CAT_ID),\(satellite.ELEMENT_SET_NO),\(satellite.REV_AT_EPOCH),\(satellite.BSTAR),\(satellite.MEAN_MOTION_DOT),\(satellite.MEAN_MOTION_DDOT)\n"
         }
-        
+
         return csvString
     }
-    
+
     private func parseCSV(data: Data) throws -> [TLE] {
         guard let csvString = String(data: data, encoding: .utf8) else {
             throw NSError(domain: "SatelliteManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid CSV data"])
         }
-        
+
         let lines = csvString.split(separator: "\n")
         var satellites: [TLE] = []
-        
+
         for line in lines.dropFirst() { // Omitimos la primera línea de encabezados
             let columns = line.split(separator: ",")
             if columns.count == 17 {
@@ -161,7 +178,7 @@ class SatelliteManager: ObservableObject {
                 satellites.append(satellite)
             }
         }
-        
+
         return satellites
     }
 
