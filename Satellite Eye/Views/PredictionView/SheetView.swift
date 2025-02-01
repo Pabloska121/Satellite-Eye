@@ -7,7 +7,7 @@ struct SheetView: View {
     
     @Binding var cameraPosition: MapCameraPosition
     @Binding var path: [CLLocationCoordinate2D]
-    @Binding var actualpass: (Date, Date, Double, Date, Visibility, String)
+    @Binding var actualpass: (Date, Date, Double, Date, Visibility, String, Double)
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -112,39 +112,57 @@ struct SheetView: View {
         }
     }
     
-    // Función para el botón que envía la notificación
+    @State private var isButtonPressed = false
+
     private func notificationButton() -> some View {
         return VStack {
             HStack(spacing: 20) {
                 Button(action: {
                     let notificationTime = Calendar.current.date(byAdding: .minute, value: -5, to: actualpass.0)!
-                    print(notificationTime)
                     
                     // Enviamos la notificación para 5 minutos antes del paso
-                    notify.sendNotification(date: notificationTime, type: "date", title: "\(satelliteInfo.position?.name ?? "Unknown") passing in 5 minutes!", body: "The satellite will pass at \(timeFormatter.string(from: actualpass.0))") { _ in}
+                    if !isButtonPressed {
+                        notify.sendNotification(date: notificationTime, type: "date", title: "\(satelliteInfo.position?.name ?? "Unknown") passing in 5 minutes!", body: "The satellite will pass at \(timeFormatter.string(from: actualpass.0))") { _ in}
+                    }
+                    // Cambiar el estado del botón para mostrar que está presionado
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isButtonPressed = true
+                    }
                 }) {
-                    RoundedRectangle(cornerRadius: 50)
-                        .fill(LinearGradient(gradient: Gradient(colors: [.cyan, .blue]), startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .background(Blur(radius: 15, opaque: true))
-                        .clipShape(RoundedRectangle(cornerRadius: 50))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 50)
-                                .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                        }
-                        .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 5)
-                        .frame(width: UIScreen.main.bounds.width - 50, height: 60)
-                        .overlay {
-                            Spacer()
-                            Text("Set a reminder for satellite pass")
-                                .font(.title3)
-                                .bold()
-                                .foregroundColor(.white)
-                                .padding()
-                            Spacer()
-                        }
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 50)
+                            .fill(LinearGradient(gradient: Gradient(colors: [.cyan, .blue]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .background(Blur(radius: 15, opaque: true))
+                            .clipShape(RoundedRectangle(cornerRadius: 50))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 50)
+                                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                            }
+                            .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 5)
+                            .frame(width: UIScreen.main.bounds.width - 50, height: 60)
+                            .overlay {
+                                VStack {
+                                    Spacer()
+                                    if isButtonPressed {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .resizable()
+                                            .frame(width: 30, height: 30)
+                                            .foregroundColor(.white)
+                                            .padding(10)
+                                            .transition(.scale)
+                                    } else {
+                                        Text("Set a reminder for satellite pass")
+                                            .font(.title3)
+                                            .bold()
+                                            .foregroundColor(.white)
+                                            .padding()
+                                    }
+                                    Spacer()
+                                }
+                            }
+                    }
                 }
                 .padding(.horizontal)
-                
             }
         }
     }

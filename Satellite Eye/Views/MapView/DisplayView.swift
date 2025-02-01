@@ -54,7 +54,8 @@ struct DisplayView: View {
                 VStack {
                     HStack {
                         Text("\(position.name)")
-                            .font(.system(size: 30, weight: .semibold))
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .lineLimit(1)
                             .foregroundColor(colorScheme == .dark ? .gray : .black)
                             .textCase(.uppercase)
                             
@@ -118,7 +119,8 @@ struct DisplayView: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
             Text("\(String(format: "%.2f", value))\(unit)")
-                .font(.body)
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .lineLimit(1)
                 .padding(.all, 10.0)
                 .foregroundStyle(Color.black)
                 .background(colorScheme == .dark ? Color.gray : .white)

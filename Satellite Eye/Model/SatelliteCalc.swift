@@ -100,7 +100,7 @@ class SatelliteCalc {
         let sun_ecef = (sun.3, sun.4, sun.5)
         let obs_ecef = Extra.ECItoECEF(timedt: utcTime, eci_vector: observerPosition)
         let sat_ecef = Extra.ECItoECEF(timedt: utcTime, eci_vector: satPosition)
-        
+        //print(utcTime)
         return Extra.mag(imag: -1.8, sat_ecef: sat_ecef, sun_ecef: sun_ecef, obs_ecef: obs_ecef)
     }
     
@@ -350,13 +350,13 @@ enum Visibility {
     var description: String {
         switch self {
         case .none:
-            return "Not visible"
+            return "hidden"
         case .daylight:
-            return "Satellite in daylight"
+            return "daylight"
         case .visible:
-            return "Visible"
+            return "visible"
         case .sunlit:
-            return "Not visible"
+            return "unlit"
         }
     }
 }

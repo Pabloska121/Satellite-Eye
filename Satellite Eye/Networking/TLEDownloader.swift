@@ -18,7 +18,6 @@ class TLEDownloader: NSObject, ObservableObject, URLSessionDownloadDelegate {
         backgroundSession = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     }
     
-    // Función para descargar el archivo TLE en background
     func downloadTLEFile(urlString: String, progressHandler: @escaping (CGFloat) -> Void, completion: @escaping (Result<[TLE], Error>) -> Void) {
         self.progressHandler = progressHandler
         self.completionHandler = completion
@@ -29,9 +28,38 @@ class TLEDownloader: NSObject, ObservableObject, URLSessionDownloadDelegate {
             return
         }
         
+        // Crear un DispatchGroup para manejar las descargas concurrentes
+        let dispatchGroup = DispatchGroup()
+        
         // Crear tarea de descarga
         let downloadTask = backgroundSession.downloadTask(with: url)
+        
+        // Agregar al DispatchGroup
+        dispatchGroup.enter()
+        
         downloadTask.resume() // Iniciar la descarga
+        
+        // Cuando la descarga se complete, notificamos que la tarea ha finalizado
+        downloadTask.observe(\.state) { task, _ in
+            if task.state == .completed {
+                dispatchGroup.leave() // Terminar la tarea en el DispatchGroup
+            }
+        }
+        
+        // Una vez que todas las tareas se completen, procesar los datos y llamar al completion
+        dispatchGroup.notify(queue: .main) {
+            do {
+                let data = try Data(contentsOf: downloadTask.originalRequest!.url!)
+                let satellites = try self.parseCSV(data: data)  // Parsear el CSV
+                DispatchQueue.main.async {
+                    self.completionHandler?(.success(satellites))  // Notificar éxito
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.completionHandler?(.failure(error))  // Notificar error
+                }
+            }
+        }
     }
 
     // Delegado de URLSession para manejar el progreso de la descarga
@@ -105,4 +133,76 @@ class TLEDownloader: NSObject, ObservableObject, URLSessionDownloadDelegate {
         
         return satellites
     }
+    
+    func downloadSingleTLE(satelliteID: Int, completion: @escaping (Result<TLE, Error>) -> Void) {
+        let apiString = "https://celestrak.org/NORAD/elements/gp.php?CATNR=\(satelliteID)&FORMAT=csv"
+        print("Descargando TLE desde \(apiString)...")
+
+        // Realizar la solicitud
+        guard let url = URL(string: apiString) else {
+            completion(.failure(NSError(domain: "TLEDownloader", code: 0, userInfo: [NSLocalizedDescriptionKey: "URL inválida."])))
+            return
+        }
+
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            guard let data = data else {
+                completion(.failure(NSError(domain: "TLEDownloader", code: 0, userInfo: [NSLocalizedDescriptionKey: "No se recibieron datos."])))
+                return
+            }
+
+            do {
+                if let tle = try self.parsesingleCSV(data: data) {
+                    completion(.success(tle))
+                } else {
+                    completion(.failure(NSError(domain: "TLEDownloader", code: 0, userInfo: [NSLocalizedDescriptionKey: "No se encontraron datos TLE en la respuesta."])))
+                }
+            } catch {
+                completion(.failure(error))
+            }
+        }
+        task.resume()
+    }
+    
+    private func parsesingleCSV(data: Data) throws -> TLE? {
+        guard let csvString = String(data: data, encoding: .utf8) else {
+            throw NSError(domain: "TLEDownloader", code: 0, userInfo: [NSLocalizedDescriptionKey: "Datos CSV inválidos."])
+        }
+
+        let lines = csvString.components(separatedBy: "\n")
+        guard lines.count > 1 else {
+            throw NSError(domain: "TLEDownloader", code: 0, userInfo: [NSLocalizedDescriptionKey: "No se encontraron líneas de datos en el CSV."])
+        }
+
+        // Procesar la línea de datos (ignorar la cabecera)
+        let columns = lines[1].split(separator: ",")
+        guard columns.count == 17 else {
+            throw NSError(domain: "TLEDownloader", code: 0, userInfo: [NSLocalizedDescriptionKey: "La línea de datos del CSV está mal formada."])
+        }
+
+        return TLE(
+            OBJECT_NAME: String(columns[0]),
+            OBJECT_ID: String(columns[1]),
+            EPOCH: String(columns[2]),
+            MEAN_MOTION: Double(columns[3]) ?? 0.0,
+            ECCENTRICITY: Double(columns[4]) ?? 0.0,
+            INCLINATION: Double(columns[5]) ?? 0.0,
+            RA_OF_ASC_NODE: Double(columns[6]) ?? 0.0,
+            ARG_OF_PERICENTER: Double(columns[7]) ?? 0.0,
+            MEAN_ANOMALY: Double(columns[8]) ?? 0.0,
+            EPHEMERIS_TYPE: Int(columns[9]) ?? 0,
+            CLASSIFICATION_TYPE: String(columns[10]),
+            NORAD_CAT_ID: Int(columns[11]) ?? 0,
+            ELEMENT_SET_NO: Int(columns[12]) ?? 0,
+            REV_AT_EPOCH: Int(columns[13]) ?? 0,
+            BSTAR: Double(columns[14]) ?? 0.0,
+            MEAN_MOTION_DOT: Double(columns[15]) ?? 0.0,
+            MEAN_MOTION_DDOT: Double(columns[16]) ?? 0.0
+        )
+    }
+
 }

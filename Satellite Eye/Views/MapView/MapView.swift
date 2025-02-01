@@ -121,8 +121,9 @@ struct MapView: View {
     private func setupInitialData() {
         guard !initialSetupDone else { return }
         Task {
-            // Inicializamos con el primer satélite que puede ser el ISS (ZARYA) o cualquier otro
-            satelliteManager.fetchSatelliteData(satelliteName: "ISS (ZARYA)")  // Cargamos los datos del satélite seleccionado
+            if satelliteManager.selectedSatellite == nil {
+                satelliteManager.fetchSatelliteData(satelliteName: "ISS (ZARYA)")
+            }
             await updateSunData()
             refreshPathandCamera()
             initialSetupDone = true
@@ -176,10 +177,10 @@ struct MapView: View {
     }
 
     private func updateSatelliteInfo() async {
-        if let selectedSatellite = satelliteManager.selectedSatellite {
-            await SatelliteInfo.requestSatelliteData(satelliteInfo: satelliteInfo, selectedSatellite, lat_et: locationManager.lat_et, lon_et: locationManager.lon_et, observerAlt: locationManager.alt)
-        }
+        guard let selectedSatellite = satelliteManager.selectedSatellite else { return }
+        await SatelliteInfo.requestSatelliteData(satelliteInfo: satelliteInfo, selectedSatellite, lat_et: locationManager.lat_et, lon_et: locationManager.lon_et, observerAlt: locationManager.alt)
     }
+
 
     private func updatePath() async {
         if let selectedSatellite = satelliteManager.selectedSatellite {

@@ -15,6 +15,7 @@ class SatelliteInfo: ObservableObject {
         let satelliteCalc = SatelliteCalc(tle: parameters)
         let (lonDegrees, latDegrees, alt, vel, pos) = satelliteCalc.satelliteCalc(utcTime: Date())
         let (az, el) = satelliteCalc.getObserverLook(utcTime: Date(), observerLon: lon_et, observerLat: lat_et, observerAlt: observerAlt)
+        //print(satelliteCalc.getApparentMagnitude(utcTime: Date(), observerLon: lon_et, observerLat: lat_et, observerAlt: alt))
         let satellite = SatellitePosition(name: parameters.OBJECT_NAME, latitude: latDegrees, longitude: lonDegrees, elevationAngle: el, azimut: az, altitude: alt, velocity: vel, xyz: pos)
         satelliteInfo.update(with: satellite)
     }

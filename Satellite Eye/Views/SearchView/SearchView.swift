@@ -5,26 +5,24 @@ struct SearchView: View {
     @State private var searchText: String = ""
     @State private var loadedSatellitesCount: Int = 0
     @State private var debouncedSearchText: String = ""
-    @State private var selectedGroup: String = "all" // Nuevo estado para el filtro de tipo
+    @State private var selectedGroup: String = "visual" // Nuevo estado para el filtro de tipo
     @FocusState private var isSearchFieldFocused: Bool  // Control del foco
     @Binding var selectedView: Int
     
     var filteredSatellites: [TLE] {
         let query = debouncedSearchText.lowercased()
 
-        // Filtrar satélites por grupo
-        let filteredByGroup = satelliteManager.allSatellites.filter { satellite in
-            let matchesGroup: Bool
-            if selectedGroup == "all" {
-                matchesGroup = true
-            } else {
-                if let groupSatellites = satelliteManager.satellitesByGroup[selectedGroup] {
-                    matchesGroup = groupSatellites.contains(where: { $0.OBJECT_NAME == satellite.OBJECT_NAME })
-                } else {
-                    matchesGroup = false
-                }
-            }
-            return matchesGroup
+        // Filtrar satélites por grupo, usando los arrays directamente
+        let filteredByGroup: [TLE]
+        switch selectedGroup {
+        case "active":
+            filteredByGroup = satelliteManager.active
+        case "visual":
+            filteredByGroup = satelliteManager.visual
+        case "stations":
+            filteredByGroup = satelliteManager.stations
+        default:
+            filteredByGroup = satelliteManager.allSatellites
         }
 
         // Si no hay texto de búsqueda, devolver todos los satélites del grupo seleccionado
@@ -37,7 +35,7 @@ struct SearchView: View {
             let matchesSearchText = satellite.OBJECT_NAME.lowercased().contains(query) ||
                                     String(satellite.NORAD_CAT_ID).lowercased().contains(query)
             return matchesSearchText
-        }.prefix(loadedSatellitesCount)) // Convertimos a Array<TLE>
+        }.prefix(loadedSatellitesCount))
     }
 
     var body: some View {
@@ -105,25 +103,25 @@ struct SearchView: View {
     }
 
     private func loadMoreSatellites() {
+        // Seleccionar el grupo según el tipo
         let filteredByGroup: [TLE]
-        print(selectedGroup)
-        // Si el grupo seleccionado es "all", filtrar solo por el grupo y cargarlos correctamente
-        if selectedGroup == "all" {
-            // Aquí estamos filtrando por todos los satélites, sin aplicar filtro de grupo
+        
+        switch selectedGroup {
+        case "active":
+            filteredByGroup = satelliteManager.active
+        case "visual":
+            filteredByGroup = satelliteManager.visual
+        case "stations":
+            filteredByGroup = satelliteManager.stations
+        default:
             filteredByGroup = satelliteManager.allSatellites
-        } else {
-            filteredByGroup = satelliteManager.allSatellites.filter { satellite in
-                if let groupSatellites = satelliteManager.satellitesByGroup[selectedGroup] {
-                    return groupSatellites.contains(where: { $0.OBJECT_NAME == satellite.OBJECT_NAME })
-                }
-                return false
-            }
         }
 
         // Asegurarse de que no sobrepasemos el total de satélites disponibles
         let nextBatch = filteredByGroup.dropFirst(loadedSatellitesCount).prefix(100)
+
+        // Incrementar el contador de satélites cargados
         loadedSatellitesCount += nextBatch.count
-        print("Loaded more satellites, total: \(loadedSatellitesCount)")
     }
 
     private func debounceSearch(query: String) {

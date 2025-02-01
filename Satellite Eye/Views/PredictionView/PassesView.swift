@@ -6,11 +6,11 @@ struct PassesView: View {
     
     @ObservedObject var satelliteManager: SatelliteManager
     @ObservedObject var locationManager: Location
-    @Binding var passes: [(Date, Date, Double, Date, Visibility, String)]
+    @Binding var passes: [(Date, Date, Double, Date, Visibility, String, Double)]
     @Binding var path: [CLLocationCoordinate2D]
     @Binding var cameraPosition: MapCameraPosition
     @Binding var isSheetPresented: BottomSheetPosition
-    @Binding var actualpass: (Date, Date, Double, Date, Visibility, String)
+    @Binding var actualpass: (Date, Date, Double, Date, Visibility, String, Double)
     
     var body: some View {
 
@@ -20,7 +20,8 @@ struct PassesView: View {
                     HStack {
                         Spacer()
                         Text("Not Visible")
-                            .font(.title2)
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .lineLimit(1)
                         Spacer()
                     }
                     Spacer()
@@ -34,7 +35,7 @@ struct PassesView: View {
                         ForEach(groupedPasses, id: \.0) { (day, dayPasses) in
                             // Título del día
                             Text(day)
-                                .font(.headline)
+                                .font(.system(size: 21, weight: .bold, design: .rounded))
                                 .padding(.top)
                                 .foregroundStyle(LinearGradient(gradient: Gradient(colors: [.blue, .cyan]), startPoint: .leading, endPoint: .trailing))
                             
@@ -59,12 +60,12 @@ struct PassesView: View {
 
     }
     
-    private func agruparPasesPorDia(passes: [(Date, Date, Double, Date, Visibility, String)]) -> [(String, [(Date, Date, Double, Date, Visibility, String)])] {
+    private func agruparPasesPorDia(passes: [(Date, Date, Double, Date, Visibility, String, Double)]) -> [(String, [(Date, Date, Double, Date, Visibility, String, Double)])] {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "EEEE dd/MM/yyyy"
-        var pasesAgrupados: [(String, [(Date, Date, Double, Date, Visibility, String)])] = []
+        var pasesAgrupados: [(String, [(Date, Date, Double, Date, Visibility, String, Double)])] = []
         var currentDay: String? = nil
-        var currentPasses: [(Date, Date, Double, Date, Visibility, String)] = []
+        var currentPasses: [(Date, Date, Double, Date, Visibility, String, Double)] = []
         
         for pass in passes {
             let dayKey = dateFormatter.string(from: pass.0)
@@ -91,7 +92,7 @@ struct PassesView: View {
         return pasesAgrupados
     }
     
-    private func displayPredictionPath(for pass: (Date, Date, Double, Date, Visibility, String)) {
+    private func displayPredictionPath(for pass: (Date, Date, Double, Date, Visibility, String, Double)) {
         path = []
         guard let selectedSatellite = satelliteManager.selectedSatellite else { return }
         
@@ -118,7 +119,7 @@ struct PassesView: View {
     }
     
     // Vista de detalle de cada pase
-    private func cicloDetailView(pass: (Date, Date, Double, Date, Visibility, String)) -> some View {
+    private func cicloDetailView(pass: (Date, Date, Double, Date, Visibility, String, Double)) -> some View {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "EEEE dd/MM/yyyy"
         
@@ -139,7 +140,7 @@ struct PassesView: View {
                             .stroke(Color.white.opacity(0.5), lineWidth: 1)
                     }
                     .shadow(color: Color.white.opacity(0.1), radius: 15, x: 0, y: 5)
-                    .frame(width: UIScreen.main.bounds.width - 50, height: 120)
+                    .frame(width: UIScreen.main.bounds.width - 50, height: 150)
                     .overlay {
                         CicloDetailInfoView(horaInicio: horaInicio, horaFin: horaFin, pass: pass)
                     }

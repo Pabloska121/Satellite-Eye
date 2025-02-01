@@ -11,12 +11,13 @@ struct PredictionView: View {
     @State var bottomSheetPosition: BottomSheetPosition = .hidden
     @State var hasDragged: Bool = false
     @State private var utcTime = Date() // Hora UTC de la predicción
-    @State private var passes: [(Date, Date, Double, Date, Visibility, String)] = [] // Pasajes de satélites
+    @State private var passes: [(Date, Date, Double, Date, Visibility, String, Double)] = [] // Pasajes de satélites
     @State private var isLoading = false
     @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var path: [CLLocationCoordinate2D] = []
     @State private var predictionDone: Bool = false
-    @State private var actualpass: (Date, Date, Double, Date, Visibility, String) = (Date(), Date(), 0.0, Date(), .none, "")
+    @State private var actualpass: (Date, Date, Double, Date, Visibility, String, Double) = (Date(), Date(), 0.0, Date(), .none, "", 0.0)
+    @State private var magnitudes: [Double] = []
     @Binding var selectedView: Int
     
     @Environment(\.colorScheme) var colorScheme
@@ -98,7 +99,7 @@ struct PredictionView: View {
     private func titleView() -> some View {
         HStack {
             Text("Prediction")
-                .font(.largeTitle.bold())
+                .font(.system(size: 40, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.white)
             Spacer()
         }
@@ -159,16 +160,19 @@ struct PredictionView: View {
         }
         
         do {
-            passes = try await addMeteo(passesTuple: passes_tuple, colorScheme: colorScheme)
-            
-            var magnitudes: [Double] = [] // Para almacenar las magnitudes aparentes por pasaje
+            let passes_tuple = try await addMeteo(passesTuple: passes_tuple, colorScheme: colorScheme)
 
-            for pass in passes {
+            for pass in passes_tuple {
                 let maxTime = pass.3
 
                 let apparentMagnitude = satelliteCalc.getApparentMagnitude(utcTime: maxTime, observerLon: locationManager.lon_et, observerLat: locationManager.lat_et, observerAlt: locationManager.alt)
 
                 magnitudes.append(apparentMagnitude)
+            }
+            passes = []
+            for (index, pass) in passes_tuple.enumerated() {
+                let (startDate, endDate, value, maxDate, visibility, weatherType) = pass
+                passes.append((startDate, endDate, value, maxDate, visibility, weatherType, magnitudes[index]))
             }
         } catch {
             print("Error al añadir meteo: \(error)")

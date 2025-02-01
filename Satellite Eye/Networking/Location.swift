@@ -19,7 +19,7 @@ class Location: NSObject, ObservableObject, CLLocationManagerDelegate {
         heading = 0
         super.init()
         self.locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.startUpdatingHeading()
         self.locationManager.requestWhenInUseAuthorization()
     }
@@ -27,7 +27,7 @@ class Location: NSObject, ObservableObject, CLLocationManagerDelegate {
     func requestLocation(completion: @escaping (CLLocation?) -> Void) {
         self.locationCompletion = completion
         locationUpdated = false
-        locationManager.startUpdatingLocation()
+        locationManager.startMonitoringSignificantLocationChanges()
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
